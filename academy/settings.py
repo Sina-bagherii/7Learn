@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'catalog.apps.CatalogConfig',
     'transaction.apps.TransactionConfig',
     'assistant.apps.AssistantConfig',
+    'planner.apps.PlannerConfig',
     'corsheaders'
 ]
 
