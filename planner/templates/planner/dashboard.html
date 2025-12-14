@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Everyday Planner</title>
+    <style>
+        :root {
+            --slate-50: #f8fafc;
+            --slate-100: #f1f5f9;
+            --slate-200: #e2e8f0;
+            --slate-700: #334155;
+            --indigo-600: #4f46e5;
+            --indigo-700: #4338ca;
+            --emerald-500: #10b981;
+            --rose-500: #f43f5e;
+        }
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: "Inter", system-ui, -apple-system, sans-serif; background: var(--slate-50); color: var(--slate-700); }
+        .page { max-width: 1080px; margin: 0 auto; padding: 32px 20px 48px; }
+        h1 { margin: 0 0 8px; font-size: 2rem; }
+        p.lead { margin: 0 0 24px; color: #475569; }
+        .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+        .card { background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0 15px 35px rgba(15, 23, 42, 0.08); border: 1px solid var(--slate-100); }
+        label { font-weight: 600; display: block; margin-bottom: 6px; }
+        input, textarea, select { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--slate-200); font: inherit; color: inherit; }
+        textarea { resize: vertical; }
+        .actions { display: flex; gap: 10px; align-items: center; }
+        button { border: none; border-radius: 10px; padding: 10px 16px; font-weight: 700; cursor: pointer; background: var(--indigo-600); color: #fff; }
+        button:hover { background: var(--indigo-700); }
+        .pill { border-radius: 999px; padding: 6px 12px; font-size: 0.85rem; display: inline-flex; gap: 8px; align-items: center; background: var(--slate-100); }
+        .pill.done { background: #dcfce7; color: #166534; }
+        .pill.pending { background: #fff1f2; color: #be123c; }
+        .task-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; }
+        .task { display: flex; gap: 12px; align-items: flex-start; border: 1px solid var(--slate-200); border-radius: 12px; padding: 12px 14px; }
+        .task-main { flex: 1; }
+        .task h3 { margin: 0 0 6px; }
+        .task-meta { display: flex; flex-wrap: wrap; gap: 8px; font-size: 0.85rem; color: #475569; }
+        .task-actions { display: flex; gap: 8px; }
+        .task-actions form { margin: 0; }
+        .secondary { background: #e2e8f0; color: #1f2937; }
+        .secondary:hover { background: #cbd5e1; }
+        .danger { background: var(--rose-500); }
+        .danger:hover { filter: brightness(0.95); }
+        .message { padding: 12px 14px; border-radius: 12px; margin-bottom: 12px; }
+        .message.success { background: #ecfdf3; color: #14532d; }
+        .message.error { background: #fef2f2; color: #991b1b; }
+        .badge { border-radius: 8px; padding: 4px 8px; font-size: 0.8rem; background: var(--slate-100); }
+    </style>
+</head>
+<body>
+<div class="page">
+    <header>
+        <h1>Everyday Planner</h1>
+        <p class="lead">Capture today's focus, break down tasks, and finish with a clear, lightweight plan.</p>
+    </header>
+
+    {% for message in messages %}
+        <div class="message {{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+
+    <div class="grid">
+        <section class="card">
+            <form method="post" class="stack" style="display: grid; gap: 12px;">
+                {% csrf_token %}
+                {{ plan_form.non_field_errors }}
+                <input type="hidden" name="action" value="update_plan" />
+                <div>
+                    <label for="id_plan-date">Day</label>
+                    {{ plan_form.date }}
+                    {% for error in plan_form.date.errors %}
+                        <div class="message error">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                <div>
+                    <label for="id_plan-main_focus">Main focus</label>
+                    {{ plan_form.main_focus }}
+                    {% for error in plan_form.main_focus.errors %}
+                        <div class="message error">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                <div>
+                    <label for="id_plan-notes">Notes</label>
+                    {{ plan_form.notes }}
+                    {% for error in plan_form.notes.errors %}
+                        <div class="message error">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                <div class="actions">
+                    <button type="submit">Save focus</button>
+                    <span class="pill">Planning for {{ target_date }}</span>
+                </div>
+            </form>
+        </section>
+
+        <section class="card">
+            <h2 style="margin-top: 0;">Add a task</h2>
+            <form method="post" style="display: grid; gap: 12px;">
+                {% csrf_token %}
+                {{ task_form.non_field_errors }}
+                <input type="hidden" name="action" value="add_task" />
+                <div>
+                    <label for="id_task-title">Task</label>
+                    {{ task_form.title }}
+                    <small style="color:#475569;">{{ task_form.title.help_text }}</small>
+                    {% for error in task_form.title.errors %}
+                        <div class="message error">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));">
+                    <div>
+                        <label for="id_task-category">Category</label>
+                        {{ task_form.category }}
+                        {% for error in task_form.category.errors %}
+                            <div class="message error">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    <div>
+                        <label for="id_task-priority">Priority</label>
+                        {{ task_form.priority }}
+                        {% for error in task_form.priority.errors %}
+                            <div class="message error">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    <div>
+                        <label for="id_task-scheduled_time">Time</label>
+                        {{ task_form.scheduled_time }}
+                        {% for error in task_form.scheduled_time.errors %}
+                            <div class="message error">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    <div>
+                        <label for="id_task-duration_minutes">Minutes</label>
+                        {{ task_form.duration_minutes }}
+                        <small style="color:#475569;">{{ task_form.duration_minutes.help_text }}</small>
+                        {% for error in task_form.duration_minutes.errors %}
+                            <div class="message error">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="actions">
+                    <button type="submit">Add to plan</button>
+                    <span class="pill pending">{{ tasks|length }} task(s) planned</span>
+                </div>
+            </form>
+        </section>
+    </div>
+
+    <section class="card" style="margin-top: 16px;">
+        <div style="display:flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 10px;">
+            <h2 style="margin:0;">Today's tasks</h2>
+            <span class="badge">Focused on {{ plan.main_focus|default:"a well-paced day" }}</span>
+        </div>
+        {% if tasks %}
+            <ul class="task-list">
+                {% for task in tasks %}
+                    <li class="task">
+                        <div class="task-main">
+                            <div class="task-meta">
+                                {% if task.category %}<span class="badge">{{ task.get_category_display }}</span>{% endif %}
+                                <span class="badge">Priority: {{ task.get_priority_display }}</span>
+                                {% if task.scheduled_time %}<span class="badge">At {{ task.scheduled_time }}</span>{% endif %}
+                                {% if task.duration_minutes %}<span class="badge">{{ task.duration_minutes }} min</span>{% endif %}
+                            </div>
+                            <h3>{{ task.title }}</h3>
+                            <p style="margin:0; font-size:0.9rem; color:#475569;">Added at {{ task.created_at|date:"H:i" }}</p>
+                        </div>
+                        <div class="task-actions">
+                            <form method="post" action="{% url 'planner:toggle_task' task.pk %}">
+                                {% csrf_token %}
+                                <button class="secondary" type="submit">{% if task.is_done %}Mark undone{% else %}Mark done{% endif %}</button>
+                            </form>
+                            <form method="post" action="{% url 'planner:delete_task' task.pk %}">
+                                {% csrf_token %}
+                                <button class="danger" type="submit">Delete</button>
+                            </form>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p style="margin:0;">No tasks yet. Add your top three first.</p>
+        {% endif %}
+    </section>
+</div>
+</body>
+</html>
